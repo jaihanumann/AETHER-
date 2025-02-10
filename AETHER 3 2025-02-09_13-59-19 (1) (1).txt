@@ -1,0 +1,3429 @@
+@Composable
+fun NewsFeedScreen(viewModel: NewsViewModel) {
+    val newsList by viewModel.news.collectAsState()
+
+    LazyColumn {
+        items(newsList) { newsArticle ->
+            NewsItem(newsArticle = newsArticle)
+        }
+    }
+}class HomeViewModel : ViewModel() {
+    private val _posts = MutableLiveData<List<Post>>()
+    val posts: LiveData<List<Post>> get() = _posts
+
+    init {
+        // Firebase से डेटा फेच करें
+        viewModelScope.launch {
+            val posts = repository.getPosts()
+            _posts.value = posts
+        }
+    }
+}@Composable
+fun HomeScreen(viewModel: HomeViewModel) {
+    val posts by viewModel.posts.collectAsState()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Instagram") },
+                actions = {
+                    // प्रोफ़ाइल, खोज, संदेश आइकन
+                }
+            )
+        }
+    ) {
+        LazyColumn {
+            items(posts) { post ->
+                PostItem(post = post)
+            }
+        }
+    }
+}
+
+@Composable
+fun PostItem(post: Post) {
+    // पोस्ट का लेआउट
+    // ...
+}@Composable
+fun HomeScreen(viewModel: HomeViewModel) {
+    val posts by viewModel.posts.collectAsState()
+    val stories = listOf(// स्टोरी डेटा)
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Instagram") },
+                actions = {
+                    // प्रोफ़ाइल, खोज, संदेश आइकन
+                }
+            )
+        }
+    ) {
+        Column {
+            StoryRow(stories = stories)
+            LazyColumn {
+                items(posts) { post ->
+                    PostItem(post = post)
+                }
+            }
+        }
+    }
+}@Composable
+fun StoryRow(stories: List<Story>) {
+    LazyRow {
+        items(stories) { story ->
+            StoryItem(story = story)
+        }
+    }
+}@Composable
+fun StoryRow(stories: List<Story>) {
+    LazyRow {
+        items(stories) { story ->
+            StoryItem(story = story)
+        }
+    }
+}fun MyTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),fun MyTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    )
+}
+        content = content
+    )
+}
+2. लेआउट@Composable
+fun HomeScreen() {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Instagram") },
+                actions = {
+                    // प्रोफ़ाइल, खोज, संदेश आइकन
+                }
+            )
+        }
+    ) {
+        Column {
+            StoryRow(stories = stories)
+            LazyColumn {
+                items(posts) { post ->
+                    PostItem(post = post)
+                }
+            }
+        }
+    }
+}val colors = if (darkTheme) {
+    DarkColorPalette
+} else {
+    LightColorPalette
+}fun HomeScreen() {
+    val darkTheme = isSystemInDarkTheme()
+    MyTheme(darkTheme = darkTheme) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Instagram", contentDescription = "Instagram App") },
+                    actions = {
+                        Icon(Icons.Default.Search, contentDescription = "Search")
+                        Icon(Icons.Default.Message, contentDescription = "Messages")
+                    }
+                )
+            }
+        ) {
+            Column {
+                StoryRow(stories = stories)
+                LazyColumn {
+                    items(posts) { post ->
+                        PostItem(post = post)
+                    }
+                }
+            }
+        }
+    }
+}@Composable
+fun ProfileEditScreen(viewModel: ProfileViewModel) {
+    // ... UI elements for editing profile information
+    Button(onClick = {
+        viewModel.updateProfile(
+            name = nameTextField.value,
+            bio = bioTextField.value,
+            website = websiteTextField.value
+        )
+    }) {
+        Text("Save")
+    }
+}data class User(
+    val uid: String,
+    val name: String,
+    val bio: String,
+    val website: String,
+    val isPrivate: Boolean,
+    // ... अन्य डेटा
+)
+
+// ViewModel
+class ProfileViewModel(private val userRepository: UserRepository) {
+    fun updateProfile(name: String, bio: String, website: String) {
+        // Firebase Firestore में उपयोगकर्ता डेटा अपडेट करें
+        userRepository.updateProfile(name, bio, website)
+    }
+}@Composable
+fun ProfileImage(imageUrl: String) {
+    Image(
+        painter = rememberAsyncImagePainter(model = imageUrl),
+        contentDescription = "Profile Picture",
+        modifier = Modifier.clickable {
+            // इमेज चुनने के लिए इंटेंट
+        }
+    )
+}private fun uploadProfileImage(uri: Uri) {
+    val storageRef = FirebaseStorage.getInstance().reference
+    val imageRef = storageRef.child("profile_images/${UUID.randomUUID()}.jpg")
+
+    val uploadTask = imageRef.putFile(uri)
+    uploadTask.addOnSuccessListener {
+        // इमेज URL प्राप्त करें और Firestore में अपडेट करें
+    }
+}fun PrivacySettings() {
+  var isPrivate by remember { mutableStateOf(false) }
+  Row(
+      Modifier
+          .fillMaxWidth()
+          .padding(16.dp)
+  ) {
+      Text("Private Account")
+      Spacer(modifier = Modifier.weight(1f))
+      Switch(
+          checked = isPrivate,
+          onCheckedChange = { isPrivate = it }
+      )
+  }
+}// Firebase Firestore में उपयोगकर्ता डेटा अपडेट करें
+db.collection("users")
+    .document(FirebaseAuth.getInstance().currentUser!!.uid)
+    .update("isPrivate", isPrivate)@Composable
+fun FollowersList(users: List<User>) {
+    LazyColumn {
+        items(users) { user ->
+            UserItem(user = user)
+        }
+    }
+}@Composable
+fun NotificationSettings() {
+  // विभिन्न प्रकार के नोटिफिकेशंस के लिए टॉगल स्विच
+}@Composable
+fun ProfileScreen(viewModel: ProfileViewModel) {
+    val user by viewModel.user.collectAsState()
+
+    Column {
+        // प्रोफ़ाइल चित्र
+        ProfileImage(imageUrl = user.profileImageUrl)
+
+        // नाम, जैव, वेबसाइट
+        Text(text = user.name)
+        // ...
+
+        // निजी खाता टॉगल
+        PrivacySettings()
+
+        // फ़ॉलोअर्स और फ़ॉलोइंग बटन
+        // ...
+
+        // नोटिफिकेशन सेटिंग्स
+        // ...
+    }
+}@Composable
+fun ProfileScreen(viewModel: ProfileViewModel) {
+    // ...
+    Image(
+        painter = rememberAsyncImagePainter(model = user.coverImageUrl),
+        contentDescription = "Profile Cover"
+    )
+    // ...
+}@Composable
+fun ProfileScreen(viewModel: ProfileViewModel) {
+    // ...
+    LazyRow {
+        items(user.highlights) { highlight ->
+            HighlightItem(highlight = highlight)
+        }
+    }
+    // ...
+}Composable
+fun UserItem(user: User) {
+    // ...
+    Button(onClick = {
+        viewModel.blockUser(user.id)
+    }) {
+        Text("Block")
+    }
+}data class User(
+    val uid: String,
+    val name: String,
+    val bio: String,
+    val profileImageUrl: String,
+    val coverImageUrl: String,
+    val isPrivate: Boolean,
+    val following: List<String>,
+    val followers: List<String>,
+    val blockedUsers: List<String>
+)
+
+// ViewModel
+class ProfileViewModel(private val userRepository: UserRepository) {
+    fun updateProfile(name: String, bio: String, website: String) {
+        // Firebase Firestore में उपयोगकर्ता डेटा अपडेट करें
+        userRepository.updateProfile(name, bio, website)
+    }
+
+    fun blockUser(userId: String) {
+        // Firebase Firestore में ब्लॉक किए गए उपयोगकर्ताओं की सूची में उपयोगकर्ता को जोड़ें
+        userRepository.blockUser(userId)
+    }
+}fun MyScreen() {
+    Text(
+        text = "Hello, world!",
+        contentDescription = "A greeting message"
+    )
+    
+    Button(onClick = { /* ... */ }) {
+        Text(text = "Click me")
+    }
+}fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}<resources>
+    <string name="hello">Hello, %1$s!</string>
+</resources>@Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            // ... बाकी का UI
+        }
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onServiceConnected() {
+        // सर्विस कनेक्ट होने पर कॉल किया जाता है
+    }
+
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        // जब भी एक एक्सेसिबिलिटी इवेंट होता है, तो यह कॉल किया जाता है
+    }
+}Text(
+    text = "Hello, world!",
+    contentDescription = "A greeting message",
+    modifier = Modifier.semantics {
+        heading()
+    }
+)Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}<resources>
+    <string name="hello">Hello, %1$s!</string>
+</resources>@Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            // ... बाकी का UI
+        }
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                // उपयोगकर्ता ने किसी व्यू पर क्लिक किया है
+            }
+            // अन्य इवेंट टाइप्स
+        }
+    }
+}Kotlin
+
+@Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            // ... बाकी का UI
+        }
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onServiceConnected() {
+        // सर्विस कनेक्ट होने पर कॉल किया जाता है
+    }
+
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                // उपयोगकर्ता ने किसी व्यू पर क्लिक किया है
+                val clickedView = event.source
+                // clickedView का उपयोग करके आवश्यक कार्य करें
+            }
+            // अन्य इवेंट टाइप्स
+        }
+    }
+}@Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}Composable
+fun MyScreen() {
+    Text(
+        text = "This is a button",
+        modifier = Modifier.semantics {
+            // इस तत्व को एक बटन के रूप में चिह्नित करें
+            button()
+        }
+    )
+}@Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}<resources>
+    <string name="hello">Hello, %1$s!</string>
+</resources>@Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            Column {
+                Text(
+                    text = "Hello, world!",
+                    modifier = Modifier.semantics {
+                        heading()
+                    }
+                )
+                Button(onClick = { /* ... */ }) {
+                    Text(text = stringResource(id = R.string.button_text))
+                }
+            }
+        }
+    }
+}Composable
+fun MyScreen() {
+    Text(
+        text = "यह एक बटन है",
+        modifier = Modifier.semantics {
+            button() // इस तत्व को एक बटन के रूप में चिह्नित करें
+            label("क्लिक करें") // तत्व के लिए एक लेबल प्रदान करें
+        }
+    )
+}
+उपरोक्त उदाहरण में, semantic@Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}
+strings.xml फ़ाइल में:
+
+XML
+
+<resources>
+    <string name="hello">नमस्ते, %1$s!</string>
+</resources>@Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            Column {
+                Text(
+                    text = stringResource(id = R.string.welcome),
+                    modifier = Modifier.semantics {
+                        heading()
+                    }
+                )
+                Button(onClick = { /* ... */ }) {
+                    Text(text = stringResource(id = R.string.button_text))
+                }
+            }
+        }
+    }
+}Image(
+    painter = painterResource(id = R.drawable.ic_search),
+    contentDescription = contentDescription = stringResource(id = R.string.search_icon)
+)Button(
+    onClick = { /* ... */ },
+    modifier = Modifier.semantics { clickable(onClickLabel = "Click button") }
+)val colors = if (isSystemInDarkTheme()) {
+    DarkColorPalette
+} else {
+    LightColorPalette
+}@Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            Column {
+                Text(
+                    text = stringResource(id = R.string.welcome),
+                    modifier = Modifier.semantics {
+                        heading()
+                    }
+                )
+                Button(onClick = { /* ... */ }) {
+                    Text(text = stringResource(id = R.string.button_text))
+                }
+            }
+        }
+    }
+}fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}
+strings.xml (अंग्रेजी):
+
+XML
+
+<resources>
+    <string name="hello">Hello, %1$s!</string>
+</resources>
+strings.fr.xml (फ्रेंच):
+
+XML
+
+<resources>
+    <string name="hello">Bonjour, %1$s!</string>
+</resources>@Composable
+fun MyButton(onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.semantics {
+            clickable(onClickLabel = "Click me")
+        }
+    ) {
+        Text(text = "Click me")
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                // उपयोगकर्ता ने किसी व्यू पर क्लिक किया है
+            }
+        }
+    }
+}Composable
+fun MyScreen() {
+    Text(
+        text = "यह एक शीर्षक है",
+        modifier = Modifier.semantics {
+            heading() // इस तत्व को एक शीर्षक के रूप में चिह्नित करें
+        }
+    )
+    
+    Image(
+        painter = painterResource(id = R.drawable.my_image),
+        contentDescription = "यह एक सुंदर दृश्य है",
+        modifier = Modifier.semantics {
+            image()
+        }
+    )
+    
+    Button(
+        onClick = { /* ... */ },
+        modifier = Modifier.semantics {
+            clickable(onClickLabel = "क्लिक करें")
+        }
+    ) {
+        Text(text = "क्लिक करें")
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                // उपयोगकर्ता ने किसी व्यू पर क्लिक किया है
+            }
+            // अन्य इवेंट टाइप्स
+        }
+    }
+}fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}
+strings.xml फ़ाइल में:
+
+XML
+
+<resources>
+    <string name="hello">नमस्ते, %1$s!</string>
+</resources>class MyAccessibilityService : AccessibilityService() {
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                // उपयोगकर्ता ने किसी व्यू पर क्लिक किया है
+                val clickedView = event.source
+                // clickedView का उपयोग करके आवश्यक कार्य करें
+            }
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                // विंडो स्टेट बदल गई है
+                val windowContent = event.source
+                // windowContent का उपयोग करके आवश्यक कार्य करें
+            }
+            // अन्य इवेंट टाइप्स
+        }
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                // यदि कोई विशिष्ट ऐप खुल गया है, तो स्वचालित कार्रवाई करें
+                if (event.className == "com.example.myApp") {
+                    val button = findViewByContentDescription("Login Button")
+                    if (button != null) {
+                        performActionOnView(button, AccessibilityNodeInfo.ACTION_CLICK)
+                    }
+                }
+            }
+        }
+    }
+}fun MyScreen() {
+    Text(
+        text = "यह एक बटन है",
+        modifier = Modifier.semantics {
+            button() // इस तत्व को एक बटन के रूप में चिह्नित करें
+            label("क्लिक करें") // तत्व के लिए एक लेबल प्रदान करें
+        }
+    )
+}fun MyScreen() {
+    Text(
+        text = "यह एक बटन है",
+        modifier = Modifier.semantics {
+            button() // इस तत्व को एक बटन के रूप में चिह्नित करें
+            label("क्लिक करें") // तत्व के लिए एक लेबल प्रदान करें
+        }
+    )
+}Composable
+fun MyScreen() {
+    // ...
+    val accessibilityManager = LocalAccessibilityManager.current
+    if (accessibilityManager.isEnabled) {
+        // यदि Accessibility सेवा सक्षम है, तो अतिरिक्त सुलभता सुविधाएँ जोड़ें
+    }
+}Composable
+fun MyScreen() {
+    val accessibilityManager = LocalAccessibilityManager.current
+
+    Column {
+        Text(
+            text = "यह एक शीर्षक है",
+            modifier = Modifier.semantics {
+                heading()
+            }
+        )
+        
+        Image(
+            painter = painterResource(id = R.drawable.my_image),
+            contentDescription = "यह एक सुंदर दृश्य है",
+            modifier = Modifier.semantics {
+                image()
+            }
+        )
+        
+        Button(
+            onClick = { /* ... */ },
+            modifier = Modifier.semantics {
+                clickable(onClickLabel = "क्लिक करें")
+            }
+        ) {
+            Text(text = "क्लिक करें")
+        }
+    }
+}@Composable
+fun MyScreen() {
+    Text(
+        text = "यह एक बटन है",
+        modifier = Modifier.semantics {
+            button() // इस तत्व को एक बटन के रूप में चिह्नित करें
+            label("क्लिक करें") // तत्व के लिए एक लेबल प्रदान करें
+        }
+    )
+}@Composable
+fun MyScreen() {
+    // ...
+    val accessibilityManager = LocalAccessibilityManager.current
+    if (accessibilityManager.isEnabled) {
+        // यदि Accessibility सेवा सक्षम है, तो अतिरिक्त सुलभता सुविधाएँ जोड़ें
+    }
+}Image(
+    painter = painterResource(id = R.drawable.my_image),
+    contentDescription = "यह एक सुंदर दृश्य है"
+)Button(
+    onClick = { /* ... */ },
+    modifier = Modifier.semantics { clickable(onClickLabel = "क्लिक करें") }
+)Button(
+    onClick = { /* ... */ },
+    modifier = Modifier.semantics { clickable(onClickLabel = "क्लिक करें") }
+)Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            Column {
+                Text(
+                    text = stringResource(id = R.string.welcome),
+                    modifier = Modifier.semantics {
+                        heading()
+                    }
+                )
+                Button(onClick = { /* ... */ }) {
+                    Text(text = stringResource(id = R.string.button_text))
+                }
+            }
+        }
+    }
+}fun MyScreen() {
+    Text(
+        text = "यह एक शीर्षक है",
+        modifier = Modifier.semantics {
+            heading() // इस तत्व को एक शीर्षक के रूप में चिह्नित करें
+        }
+    )
+    
+    Image(
+        painter = painterResource(id = R.drawable.my_image),
+        contentDescription = "यह एक सुंदर दृश्य है",
+        modifier = Modifier.semantics {
+            image()
+        }
+    )
+    
+    Button(
+        onClick = { /* ... */ },
+        modifier = Modifier.semantics {
+            clickable(onClickLabel = "क्लिक करें")
+        }
+    ) {
+        Text(text = "क्लिक करें")
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                // उपयोगकर्ता ने किसी व्यू पर क्लिक किया है
+                val clickedView = event.source
+                // clickedView का उपयोग करके आवश्यक कार्य करें
+            }
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                // विंडो स्टेट बदल गई है
+                val windowContent = event.source
+                // windowContent का उपयोग करके आवश्यक कार्य करें
+            }
+            // अन्य इवेंट टाइप्स
+        }
+    }
+}Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            Column {
+                Text(
+                    text = stringResource(id = R.string.welcome),
+                    modifier = Modifier.semantics {
+                        heading()
+                    }
+                )
+                Button(onClick = { /* ... */ }) {
+                    Text(text = stringResource(id = R.string.button_text))
+                }
+            }
+        }
+    }
+}Kotlin
+
+Image(
+    painter = painterResource(id = R.drawable.ic_search),
+    contentDescription = contentDescription = stringResource(id = R.string.search_icon)
+)onClick = { /* ... */ },
+    modifier = Modifier.semantics { clickable(onClickLabel = "क्लिक करें") }
+)DarkColorPalette
+} else {
+    LightColorPalette
+}fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}@Composable
+fun NewsFeedScreen(viewModel: NewsViewModel) {
+    val newsList by viewModel.news.collectAsState()
+
+    LazyColumn {
+        items(newsList) { newsArticle ->
+            NewsItem(newsArticle = newsArticle)
+        }
+    }
+}class HomeViewModel : ViewModel() {
+    private val _posts = MutableLiveData<List<Post>>()
+    val posts: LiveData<List<Post>> get() = _posts
+
+    init {
+        // Firebase से डेटा फेच करें
+        viewModelScope.launch {
+            val posts = repository.getPosts()
+            _posts.value = posts
+        }
+    }
+}@Composable
+fun HomeScreen(viewModel: HomeViewModel) {
+    val posts by viewModel.posts.collectAsState()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Instagram") },
+                actions = {
+                    // प्रोफ़ाइल, खोज, संदेश आइकन
+                }
+            )
+        }
+    ) {
+        LazyColumn {
+            items(posts) { post ->
+                PostItem(post = post)
+            }
+        }
+    }
+}
+
+@Composable
+fun PostItem(post: Post) {
+    // पोस्ट का लेआउट
+    // ...
+}@Composable
+fun HomeScreen(viewModel: HomeViewModel) {
+    val posts by viewModel.posts.collectAsState()
+    val stories = listOf(// स्टोरी डेटा)
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Instagram") },
+                actions = {
+                    // प्रोफ़ाइल, खोज, संदेश आइकन
+                }
+            )
+        }
+    ) {
+        Column {
+            StoryRow(stories = stories)
+            LazyColumn {
+                items(posts) { post ->
+                    PostItem(post = post)
+                }
+            }
+        }
+    }
+}@Composable
+fun StoryRow(stories: List<Story>) {
+    LazyRow {
+        items(stories) { story ->
+            StoryItem(story = story)
+        }
+    }
+}@Composable
+fun StoryRow(stories: List<Story>) {
+    LazyRow {
+        items(stories) { story ->
+            StoryItem(story = story)
+        }
+    }
+}fun MyTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),fun MyTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    )
+}
+        content = content
+    )
+}
+2. लेआउट@Composable
+fun HomeScreen() {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Instagram") },
+                actions = {
+                    // प्रोफ़ाइल, खोज, संदेश आइकन
+                }
+            )
+        }
+    ) {
+        Column {
+            StoryRow(stories = stories)
+            LazyColumn {
+                items(posts) { post ->
+                    PostItem(post = post)
+                }
+            }
+        }
+    }
+}val colors = if (darkTheme) {
+    DarkColorPalette
+} else {
+    LightColorPalette
+}fun HomeScreen() {
+    val darkTheme = isSystemInDarkTheme()
+    MyTheme(darkTheme = darkTheme) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Instagram", contentDescription = "Instagram App") },
+                    actions = {
+                        Icon(Icons.Default.Search, contentDescription = "Search")
+                        Icon(Icons.Default.Message, contentDescription = "Messages")
+                    }
+                )
+            }
+        ) {
+            Column {
+                StoryRow(stories = stories)
+                LazyColumn {
+                    items(posts) { post ->
+                        PostItem(post = post)
+                    }
+                }
+            }
+        }
+    }
+}@Composable
+fun ProfileEditScreen(viewModel: ProfileViewModel) {
+    // ... UI elements for editing profile information
+    Button(onClick = {
+        viewModel.updateProfile(
+            name = nameTextField.value,
+            bio = bioTextField.value,
+            website = websiteTextField.value
+        )
+    }) {
+        Text("Save")
+    }
+}data class User(
+    val uid: String,
+    val name: String,
+    val bio: String,
+    val website: String,
+    val isPrivate: Boolean,
+    // ... अन्य डेटा
+)
+
+// ViewModel
+class ProfileViewModel(private val userRepository: UserRepository) {
+    fun updateProfile(name: String, bio: String, website: String) {
+        // Firebase Firestore में उपयोगकर्ता डेटा अपडेट करें
+        userRepository.updateProfile(name, bio, website)
+    }
+}@Composable
+fun ProfileImage(imageUrl: String) {
+    Image(
+        painter = rememberAsyncImagePainter(model = imageUrl),
+        contentDescription = "Profile Picture",
+        modifier = Modifier.clickable {
+            // इमेज चुनने के लिए इंटेंट
+        }
+    )
+}private fun uploadProfileImage(uri: Uri) {
+    val storageRef = FirebaseStorage.getInstance().reference
+    val imageRef = storageRef.child("profile_images/${UUID.randomUUID()}.jpg")
+
+    val uploadTask = imageRef.putFile(uri)
+    uploadTask.addOnSuccessListener {
+        // इमेज URL प्राप्त करें और Firestore में अपडेट करें
+    }
+}fun PrivacySettings() {
+  var isPrivate by remember { mutableStateOf(false) }
+  Row(
+      Modifier
+          .fillMaxWidth()
+          .padding(16.dp)
+  ) {
+      Text("Private Account")
+      Spacer(modifier = Modifier.weight(1f))
+      Switch(
+          checked = isPrivate,
+          onCheckedChange = { isPrivate = it }
+      )
+  }
+}// Firebase Firestore में उपयोगकर्ता डेटा अपडेट करें
+db.collection("users")
+    .document(FirebaseAuth.getInstance().currentUser!!.uid)
+    .update("isPrivate", isPrivate)@Composable
+fun FollowersList(users: List<User>) {
+    LazyColumn {
+        items(users) { user ->
+            UserItem(user = user)
+        }
+    }
+}@Composable
+fun NotificationSettings() {
+  // विभिन्न प्रकार के नोटिफिकेशंस के लिए टॉगल स्विच
+}@Composable
+fun ProfileScreen(viewModel: ProfileViewModel) {
+    val user by viewModel.user.collectAsState()
+
+    Column {
+        // प्रोफ़ाइल चित्र
+        ProfileImage(imageUrl = user.profileImageUrl)
+
+        // नाम, जैव, वेबसाइट
+        Text(text = user.name)
+        // ...
+
+        // निजी खाता टॉगल
+        PrivacySettings()
+
+        // फ़ॉलोअर्स और फ़ॉलोइंग बटन
+        // ...
+
+        // नोटिफिकेशन सेटिंग्स
+        // ...
+    }
+}@Composable
+fun ProfileScreen(viewModel: ProfileViewModel) {
+    // ...
+    Image(
+        painter = rememberAsyncImagePainter(model = user.coverImageUrl),
+        contentDescription = "Profile Cover"
+    )
+    // ...
+}@Composable
+fun ProfileScreen(viewModel: ProfileViewModel) {
+    // ...
+    LazyRow {
+        items(user.highlights) { highlight ->
+            HighlightItem(highlight = highlight)
+        }
+    }
+    // ...
+}Composable
+fun UserItem(user: User) {
+    // ...
+    Button(onClick = {
+        viewModel.blockUser(user.id)
+    }) {
+        Text("Block")
+    }
+}data class User(
+    val uid: String,
+    val name: String,
+    val bio: String,
+    val profileImageUrl: String,
+    val coverImageUrl: String,
+    val isPrivate: Boolean,
+    val following: List<String>,
+    val followers: List<String>,
+    val blockedUsers: List<String>
+)
+
+// ViewModel
+class ProfileViewModel(private val userRepository: UserRepository) {
+    fun updateProfile(name: String, bio: String, website: String) {
+        // Firebase Firestore में उपयोगकर्ता डेटा अपडेट करें
+        userRepository.updateProfile(name, bio, website)
+    }
+
+    fun blockUser(userId: String) {
+        // Firebase Firestore में ब्लॉक किए गए उपयोगकर्ताओं की सूची में उपयोगकर्ता को जोड़ें
+        userRepository.blockUser(userId)
+    }
+}fun MyScreen() {
+    Text(
+        text = "Hello, world!",
+        contentDescription = "A greeting message"
+    )
+    
+    Button(onClick = { /* ... */ }) {
+        Text(text = "Click me")
+    }
+}fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}<resources>
+    <string name="hello">Hello, %1$s!</string>
+</resources>@Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            // ... बाकी का UI
+        }
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onServiceConnected() {
+        // सर्विस कनेक्ट होने पर कॉल किया जाता है
+    }
+
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        // जब भी एक एक्सेसिबिलिटी इवेंट होता है, तो यह कॉल किया जाता है
+    }
+}Text(
+    text = "Hello, world!",
+    contentDescription = "A greeting message",
+    modifier = Modifier.semantics {
+        heading()
+    }
+)Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}<resources>
+    <string name="hello">Hello, %1$s!</string>
+</resources>@Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            // ... बाकी का UI
+        }
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                // उपयोगकर्ता ने किसी व्यू पर क्लिक किया है
+            }
+            // अन्य इवेंट टाइप्स
+        }
+    }
+}Kotlin
+
+@Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            // ... बाकी का UI
+        }
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onServiceConnected() {
+        // सर्विस कनेक्ट होने पर कॉल किया जाता है
+    }
+
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                // उपयोगकर्ता ने किसी व्यू पर क्लिक किया है
+                val clickedView = event.source
+                // clickedView का उपयोग करके आवश्यक कार्य करें
+            }
+            // अन्य इवेंट टाइप्स
+        }
+    }
+}@Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}Composable
+fun MyScreen() {
+    Text(
+        text = "This is a button",
+        modifier = Modifier.semantics {
+            // इस तत्व को एक बटन के रूप में चिह्नित करें
+            button()
+        }
+    )
+}@Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}<resources>
+    <string name="hello">Hello, %1$s!</string>
+</resources>@Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            Column {
+                Text(
+                    text = "Hello, world!",
+                    modifier = Modifier.semantics {
+                        heading()
+                    }
+                )
+                Button(onClick = { /* ... */ }) {
+                    Text(text = stringResource(id = R.string.button_text))
+                }
+            }
+        }
+    }
+}Composable
+fun MyScreen() {
+    Text(
+        text = "यह एक बटन है",
+        modifier = Modifier.semantics {
+            button() // इस तत्व को एक बटन के रूप में चिह्नित करें
+            label("क्लिक करें") // तत्व के लिए एक लेबल प्रदान करें
+        }
+    )
+}
+उपरोक्त उदाहरण में, semantic@Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}
+strings.xml फ़ाइल में:
+
+XML
+
+<resources>
+    <string name="hello">नमस्ते, %1$s!</string>
+</resources>@Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            Column {
+                Text(
+                    text = stringResource(id = R.string.welcome),
+                    modifier = Modifier.semantics {
+                        heading()
+                    }
+                )
+                Button(onClick = { /* ... */ }) {
+                    Text(text = stringResource(id = R.string.button_text))
+                }
+            }
+        }
+    }
+}Image(
+    painter = painterResource(id = R.drawable.ic_search),
+    contentDescription = contentDescription = stringResource(id = R.string.search_icon)
+)Button(
+    onClick = { /* ... */ },
+    modifier = Modifier.semantics { clickable(onClickLabel = "Click button") }
+)val colors = if (isSystemInDarkTheme()) {
+    DarkColorPalette
+} else {
+    LightColorPalette
+}@Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            Column {
+                Text(
+                    text = stringResource(id = R.string.welcome),
+                    modifier = Modifier.semantics {
+                        heading()
+                    }
+                )
+                Button(onClick = { /* ... */ }) {
+                    Text(text = stringResource(id = R.string.button_text))
+                }
+            }
+        }
+    }
+}fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}
+strings.xml (अंग्रेजी):
+
+XML
+
+<resources>
+    <string name="hello">Hello, %1$s!</string>
+</resources>
+strings.fr.xml (फ्रेंच):
+
+XML
+
+<resources>
+    <string name="hello">Bonjour, %1$s!</string>
+</resources>@Composable
+fun MyButton(onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.semantics {
+            clickable(onClickLabel = "Click me")
+        }
+    ) {
+        Text(text = "Click me")
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                // उपयोगकर्ता ने किसी व्यू पर क्लिक किया है
+            }
+        }
+    }
+}Composable
+fun MyScreen() {
+    Text(
+        text = "यह एक शीर्षक है",
+        modifier = Modifier.semantics {
+            heading() // इस तत्व को एक शीर्षक के रूप में चिह्नित करें
+        }
+    )
+    
+    Image(
+        painter = painterResource(id = R.drawable.my_image),
+        contentDescription = "यह एक सुंदर दृश्य है",
+        modifier = Modifier.semantics {
+            image()
+        }
+    )
+    
+    Button(
+        onClick = { /* ... */ },
+        modifier = Modifier.semantics {
+            clickable(onClickLabel = "क्लिक करें")
+        }
+    ) {
+        Text(text = "क्लिक करें")
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                // उपयोगकर्ता ने किसी व्यू पर क्लिक किया है
+            }
+            // अन्य इवेंट टाइप्स
+        }
+    }
+}fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}
+strings.xml फ़ाइल में:
+
+XML
+
+<resources>
+    <string name="hello">नमस्ते, %1$s!</string>
+</resources>class MyAccessibilityService : AccessibilityService() {
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                // उपयोगकर्ता ने किसी व्यू पर क्लिक किया है
+                val clickedView = event.source
+                // clickedView का उपयोग करके आवश्यक कार्य करें
+            }
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                // विंडो स्टेट बदल गई है
+                val windowContent = event.source
+                // windowContent का उपयोग करके आवश्यक कार्य करें
+            }
+            // अन्य इवेंट टाइप्स
+        }
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                // यदि कोई विशिष्ट ऐप खुल गया है, तो स्वचालित कार्रवाई करें
+                if (event.className == "com.example.myApp") {
+                    val button = findViewByContentDescription("Login Button")
+                    if (button != null) {
+                        performActionOnView(button, AccessibilityNodeInfo.ACTION_CLICK)
+                    }
+                }
+            }
+        }
+    }
+}fun MyScreen() {
+    Text(
+        text = "यह एक बटन है",
+        modifier = Modifier.semantics {
+            button() // इस तत्व को एक बटन के रूप में चिह्नित करें
+            label("क्लिक करें") // तत्व के लिए एक लेबल प्रदान करें
+        }
+    )
+}fun MyScreen() {
+    Text(
+        text = "यह एक बटन है",
+        modifier = Modifier.semantics {
+            button() // इस तत्व को एक बटन के रूप में चिह्नित करें
+            label("क्लिक करें") // तत्व के लिए एक लेबल प्रदान करें
+        }
+    )
+}Composable
+fun MyScreen() {
+    // ...
+    val accessibilityManager = LocalAccessibilityManager.current
+    if (accessibilityManager.isEnabled) {
+        // यदि Accessibility सेवा सक्षम है, तो अतिरिक्त सुलभता सुविधाएँ जोड़ें
+    }
+}Composable
+fun MyScreen() {
+    val accessibilityManager = LocalAccessibilityManager.current
+
+    Column {
+        Text(
+            text = "यह एक शीर्षक है",
+            modifier = Modifier.semantics {
+                heading()
+            }
+        )
+        
+        Image(
+            painter = painterResource(id = R.drawable.my_image),
+            contentDescription = "यह एक सुंदर दृश्य है",
+            modifier = Modifier.semantics {
+                image()
+            }
+        )
+        
+        Button(
+            onClick = { /* ... */ },
+            modifier = Modifier.semantics {
+                clickable(onClickLabel = "क्लिक करें")
+            }
+        ) {
+            Text(text = "क्लिक करें")
+        }
+    }
+}@Composable
+fun MyScreen() {
+    Text(
+        text = "यह एक बटन है",
+        modifier = Modifier.semantics {
+            button() // इस तत्व को एक बटन के रूप में चिह्नित करें
+            label("क्लिक करें") // तत्व के लिए एक लेबल प्रदान करें
+        }
+    )
+}@Composable
+fun MyScreen() {
+    // ...
+    val accessibilityManager = LocalAccessibilityManager.current
+    if (accessibilityManager.isEnabled) {
+        // यदि Accessibility सेवा सक्षम है, तो अतिरिक्त सुलभता सुविधाएँ जोड़ें
+    }
+}Image(
+    painter = painterResource(id = R.drawable.my_image),
+    contentDescription = "यह एक सुंदर दृश्य है"
+)Button(
+    onClick = { /* ... */ },
+    modifier = Modifier.semantics { clickable(onClickLabel = "क्लिक करें") }
+)Button(
+    onClick = { /* ... */ },
+    modifier = Modifier.semantics { clickable(onClickLabel = "क्लिक करें") }
+)Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            Column {
+                Text(
+                    text = stringResource(id = R.string.welcome),
+                    modifier = Modifier.semantics {
+                        heading()
+                    }
+                )
+                Button(onClick = { /* ... */ }) {
+                    Text(text = stringResource(id = R.string.button_text))
+                }
+            }
+        }
+    }
+}fun MyScreen() {
+    Text(
+        text = "यह एक शीर्षक है",
+        modifier = Modifier.semantics {
+            heading() // इस तत्व को एक शीर्षक के रूप में चिह्नित करें
+        }
+    )
+    
+    Image(
+        painter = painterResource(id = R.drawable.my_image),
+        contentDescription = "यह एक सुंदर दृश्य है",
+        modifier = Modifier.semantics {
+            image()
+        }
+    )
+    
+    Button(
+        onClick = { /* ... */ },
+        modifier = Modifier.semantics {
+            clickable(onClickLabel = "क्लिक करें")
+        }
+    ) {
+        Text(text = "क्लिक करें")
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                // उपयोगकर्ता ने किसी व्यू पर क्लिक किया है
+                val clickedView = event.source
+                // clickedView का उपयोग करके आवश्यक कार्य करें
+            }
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                // विंडो स्टेट बदल गई है
+                val windowContent = event.source
+                // windowContent का उपयोग करके आवश्यक कार्य करें
+            }
+            // अन्य इवेंट टाइप्स
+        }
+    }
+}Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            Column {
+                Text(
+                    text = stringResource(id = R.string.welcome),
+                    modifier = Modifier.semantics {
+                        heading()
+                    }
+                )
+                Button(onClick = { /* ... */ }) {
+                    Text(text = stringResource(id = R.string.button_text))
+                }
+            }
+        }
+    }
+}Kotlin
+
+Image(
+    painter = painterResource(id = R.drawable.ic_search),
+    contentDescription = contentDescription = stringResource(id = R.string.search_icon)
+)onClick = { /* ... */ },
+    modifier = Modifier.semantics { clickable(onClickLabel = "क्लिक करें") }
+)DarkColorPalette
+} else {
+    LightColorPalette
+}import androidx.compose.foundation.layout.*
+import androidx.compose.material.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.dp
+import com.google.firebase.auth.FirebaseAuth
+
+@Composable
+fun LoginScreen() {
+    var email by remember { mutableStateOf(TextFieldValue("")) }
+    var password by remember { mutableStateOf(TextFieldValue("")) }
+    var errorMessage by remember { mutableStateOf("") }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Text("Login")
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        TextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email") },
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TextField(
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Password") },
+            modifier = Modifier.padding(horizontal = 16.dp),
+            visualTransformation = PasswordVisualTransformation()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(onClick = { 
+            // Handle login 
+            loginUser(email.text, password.text) 
+        }) {
+            Text("Login")
+        }
+
+        if (errorMessage.isNotEmpty()) {
+            Text(
+                text = errorMessage,
+                color = Color.Red,
+                modifier = Modifier.padding(top = 16.dp)
+            )
+        }
+
+        // Add buttons for Google and Facebook login (if desired)
+    }
+}
+
+private fun loginUser(email: String, password: String) {
+    FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
+        .addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                // Login successful
+                // Navigate to the main screen
+                // ...
+            } else {
+                // Handle login failure
+                errorMessage = task.exception?.message ?: "Login failed" 
+            }
+        }
+}// ViewModel
+class PostViewModel : ViewModel() {
+    private val _posts = MutableLiveData<List<Post>>()
+    val posts: LiveData<List<Post>> get() = _posts
+
+    fun getPosts() {
+        // Firebase से डेटा फेच करें और _posts को अपडेट करें
+        // ...
+    }
+}
+
+// Compose में उपयोग
+@Composable
+fun FeedScreen(viewModel: PostViewModel) {
+    val posts by viewModel.posts.collectAsState()
+
+    LazyColumn {
+        items(posts) { post ->
+            PostItem(post = post)
+        }
+    }
+}data class User(
+    val uid: String,
+    val email: String,
+    // ... अन्य डेटा
+)
+
+data class Post(
+    val id: String,
+    val userId: String,
+    val imageUrl: String,
+    val caption: String,
+    val timestamp: Long
+)Firebase Authentication
+FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
+    .addOnCompleteListener { task ->
+        if (task.isSuccessful) {
+            // लॉगिन सफल
+        } else {
+            // लॉगिन असफल
+        }
+    }
+
+// Firebase Firestore में डेटा सेव करना
+db.collection("posts").add(post)
+    .addOnSuccessListener { documentReference ->
+        // डेटा सफलतापूर्वक सेव हुआ
+    }
+    .addOnFailureListener { e ->
+        // त्रुटि हुई
+    }@Composable
+fun FeedScreen(viewModel: FeedViewModel) {
+    val posts by viewModel.posts.collectAsState()
+
+    LazyColumn {
+        items(posts) { post ->
+            PostItem(post = post)
+        }
+    }
+}
+
+@Composable
+fun PostItem(post: Post) {
+    Card {
+        Text(text = post.caption)
+        Image(painter = rememberImagePainter(post.imageUrl), contentDescription = null)
+    }
+}data class NewsArticle(
+    val title: String,
+    val description: String,
+    val imageUrl: String,
+    val publishedAt: String
+)
+class NewsRepository {
+    suspend fun getNews(): List<NewsArticle> {
+        // Network call to fetch news data from an API
+        // ...
+        return newsList // Assuming newsList is a list of NewsArticle
+    }
+}class NewsViewModel : ViewModel() {
+    private val _news = MutableLiveData<List<NewsArticle>>()
+    val news: LiveData<List<NewsArticle>> get() = _news
+
+    private val repository = NewsRepository()
+
+    init {
+        viewModelScope.launch {
+            val newsList = repository.getNews()
+            _news.value = newsList
+        }
+    }
+}fun NewsFeedScreen(viewModel: NewsViewModel) {
+    val newsList by viewModel.news.observeAsState(emptyList())
+
+    LazyColumn {
+        items(newsList) { newsArticle ->
+            NewsItem(newsArticle = newsArticle)
+        }
+    }
+}@Composable
+fun NewsFeedScreen(viewModel: NewsViewModel) {
+    val newsList by viewModel.news.collectAsState()
+
+    LazyColumn {
+        items(newsList) { newsArticle ->
+            NewsItem(newsArticle = newsArticle)
+        }
+    }
+}@Composable
+fun NewsFeedScreen(viewModel: NewsViewModel) {
+    val newsList by viewModel.news.collectAsState()
+
+    LazyColumn {
+        items(newsList) { newsArticle ->
+            NewsItem(newsArticle = newsArticle)
+        }
+    }
+}@Composable
+fun NewsFeedScreen(viewModel: NewsViewModel) {
+    val newsList by viewModel.news.collectAsState()
+
+    LazyColumn {
+        items(newsList) { newsArticle ->
+            NewsItem(newsArticle = newsArticle)
+        }
+    }
+}@Composable
+fun NewsFeedScreen(viewModel: NewsViewModel) {
+    val newsList by viewModel.news.collectAsState()
+
+    LazyColumn {
+        items(newsList) { newsArticle ->
+            NewsItem(newsArticle = newsArticle)
+        }
+    }
+}// Firebase Authentication using email and password
+FirebaseAuth.getInstance()
+    .createUserWithEmailAndPassword(email, password)
+    .addOnCompleteListener { task ->
+        if (task.isSuccessful) {
+            // Sign in success, update UI with the signed-in user's information
+            Log.d(TAG, "createUserWithEmail:success")
+            val user = FirebaseAuth.getInstance().currentUser
+            // ...
+        } else {
+            // If sign in fails, display a message and update the UI
+            Log.w(TAG, "createUserWithEmail:failure", task.exception)
+            Toast.makeText(baseContext, "Authentication failed.",
+                Toast.LENGTH_SHORT).show()
+        }
+    }Composable
+fun FeedScreen(viewModel: FeedViewModel) {
+    val posts by viewModel.posts.collectAsState()
+
+    LazyColumn {
+        items(posts) { post ->
+            PostItem(post = post)
+        }
+    }
+}
+
+@Composable
+fun PostItem(post: Post) {
+    // Post item UI with image, caption, likes, and comments
+}यूजर ऑथेंटिकेशन: फ़ायरबेस ऑथेंटिकेशन का उपयोग करके ईमेल/पासवर्ड, Google, Facebook आदि के माध्यम से यूजर रजिस्ट्रेशन और लॉगिन को लागू करें।
+Kotlin
+
+FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
+    .addOnCompleteListener { task ->
+        if (task.isSuccessful) {
+            // User created successfully
+        } else {
+            // Handle error
+        }
+    }
+पोस्ट बनाना:
+Kotlin
+
+db.collection("posts")
+    .add(post)
+    .addOnSuccessListener { documentReference ->
+        Log.d(TAG, "DocumentSnapshot added with ID: ${documentReference.id}")
+    }
+    .addOnFailureListener { e ->
+        Log.w(TAG, "Error adding document", e)
+    }
+फ़ीड:
+Kotlin
+
+db.collection("posts")
+    .orderBy("timestamp", Query.Direction.DESCENDING)
+    .get()
+    .addOnSuccessListener { result ->
+        // पोस्ट को RecyclerView में प्रदर्शित करें
+    }Kotlin
+
+// Assuming you're using Firebase Firestore
+fun searchUsers(query: String) {
+    db.collection("users")
+        .whereGreaterThanOrEqualTo("username", query)
+        .whereLessThanOrEqualTo("username", query + "\uf8ff")
+        .get()
+        .addOnSuccessListener { documents ->
+            // Handle search results
+        }
+        .addOnFailureListener { exception ->
+            // Handle error
+        }
+}
+
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import android.util.Log
+import android.view.View
+import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.android.gms.tasks.OnSuccessListener
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
+import com.google.firebase.storage.UploadTask
+import kotlinx.coroutines.launch
+
+class MainActivity : ComponentActivity() {
+
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseFirestore.getInstance()
+    private val storage = FirebaseStorage.getInstance().reference
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            MainScreen(onAuthStateChanged = { isAuthenticated ->
+                if (isAuthenticated) {
+                    HomeScreen()
+                } else {
+                    LoginScreen()
+                }
+            })
+        }
+    }
+}
+
+@Composable
+fun MainScreen(onAuthStateChanged: (Boolean) -> Unit) {
+    val user = FirebaseAuth.getInstance().currentUser
+    LaunchedEffect(key1 = user) {
+        onAuthStateChanged(user != null)
+    }
+}
+
+@Composable
+fun LoginScreen() {
+    // ... Login UI with email/password, Google, Facebook options
+}
+
+@Composable
+fun HomeScreen() {
+    val user = FirebaseAuth.getInstance().currentUser!! 
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Welcome, ${user.displayName ?: user.email}",
+            fontSize = 24.sp, 
+            fontWeight = FontWeight.Bold 
+        )
+        // Add buttons for navigating to different screens (Feed, Profile, Direct Messages, etc.)
+    }
+}
+
+// ... Other screens: FeedScreen, ProfileScreen, DirectMessageScreen, StoryScreen, etc.
+
+// Data classes
+data class User(
+    val uid: String,
+    val username: String,
+    val email: String?,
+    val profileImageUrl: String?
+)
+
+data class Post(
+    val uid: String,
+    val username: String,
+    val imageUrl: String,
+    val caption: String,
+    val timestamp: Long,
+    val likes: List<String> = emptyList()
+)
+
+data class Comment(
+    val uid: String,
+    val username: String,
+    val text: String,
+    val timestamp: Long
+)
+
+// ViewModels for managing data and UI state
+
+class FeedViewModel : ViewModel() {
+    private val _posts = mutableStateListOf<Post>()
+    val posts: List<Post> get() = _posts
+
+    init {
+        fetchPosts()
+    }
+
+    private fun fetchPosts() {
+        viewModelScope.launch {
+            db.collection("posts")
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener { result ->
+                    _posts.clear()
+                    for (document in result) {
+                        val post = document.toObject(Post::class.java)
+                        _posts.add(post)
+                    }
+                }
+                .addOnFailureListener { exception ->
+                    Log.w("TAG", "Error getting documents: ", exception)
+                }
+        }
+    }
+}
+
+// ... other ViewModels for Profile, Direct Messages, etc.
+
+// ... Implement UI components for each screen using Jetpack Compose
+
+// ... Implement logic for image/video upload, likes, comments, stories, etc.
+
+// ... Implement search functionality
+
+// ... Implement notifications using Firebase Cloud Messaging
+
+// ... Handle user interactions and data updates
+
+
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var postEditText: EditText
+    private lateinit var postButton: Button
+    private lateinit var postRecyclerView: RecyclerView
+    private lateinit var postAdapter: PostAdapter
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        postEditText = findViewById(R.id.postEditText)
+        postButton = findViewById(R.id.postButton)
+        postRecyclerView = findViewById(R.id.postRecyclerView)
+
+        postAdapter = PostAdapter(mutableListOf()) 
+        postRecyclerView.adapter = postAdapter
+        postRecyclerView.layoutManager = LinearLayoutManager(this)
+
+        postButton.setOnClickListener {
+            val postText = postEditText.text.toString()
+            if (postText.isNotEmpty()) {
+                // Simulate posting data (replace with actual data handling)
+                val post = Post(postText) 
+                postAdapter.addPost(post)
+                postEditText.text.clear() 
+            }
+        }
+    }
+}
+
+// Data class to represent a post
+data class Post(val text: String)
+
+// Adapter for displaying posts in the RecyclerView
+class PostAdapter(private val posts: MutableList<Post>) : RecyclerView.Adapter<PostAdapter.ViewHolder>() {
+
+    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val textView: TextView = itemView.findViewById(R.id.postTextView)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.post_item, parent, false)
+        return ViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.textView.text = posts[position].text
+    }
+
+    override fun getItemCount(): Int {
+        return posts.size
+    }
+
+    fun addPost(post: Post) {
+        posts.add(0, post) 
+        notifyItemInserted(0) 
+    }
+}
+XML Layout (activity_main.xml):
+
+XML
+
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <EditText
+        android:id="@+id/postEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Write your post here"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_margin="16dp"/>
+
+    <Button
+        android:id="@+id/postButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Post"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@+id/postEditText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/postRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@+id/postButton"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_margin="16dp"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+XML Layout (post_item.xml):
+
+XML
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/postTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>@Composable
+fun NewsFeedScreen(viewModel: NewsViewModel) {
+    val newsList by viewModel.news.collectAsState()
+
+    LazyColumn {
+        items(newsList) { newsArticle ->
+            NewsItem(newsArticle = newsArticle)
+        }
+    }
+}class HomeViewModel : ViewModel() {
+    private val _posts = MutableLiveData<List<Post>>()
+    val posts: LiveData<List<Post>> get() = _posts
+
+    init {
+        // Firebase से डेटा फेच करें
+        viewModelScope.launch {
+            val posts = repository.getPosts()
+            _posts.value = posts
+        }
+    }
+}@Composable
+fun HomeScreen(viewModel: HomeViewModel) {
+    val posts by viewModel.posts.collectAsState()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Instagram") },
+                actions = {
+                    // प्रोफ़ाइल, खोज, संदेश आइकन
+                }
+            )
+        }
+    ) {
+        LazyColumn {
+            items(posts) { post ->
+                PostItem(post = post)
+            }
+        }
+    }
+}
+
+@Composable
+fun PostItem(post: Post) {
+    // पोस्ट का लेआउट
+    // ...
+}@Composable
+fun HomeScreen(viewModel: HomeViewModel) {
+    val posts by viewModel.posts.collectAsState()
+    val stories = listOf(// स्टोरी डेटा)
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Instagram") },
+                actions = {
+                    // प्रोफ़ाइल, खोज, संदेश आइकन
+                }
+            )
+        }
+    ) {
+        Column {
+            StoryRow(stories = stories)
+            LazyColumn {
+                items(posts) { post ->
+                    PostItem(post = post)
+                }
+            }
+        }
+    }
+}@Composable
+fun StoryRow(stories: List<Story>) {
+    LazyRow {
+        items(stories) { story ->
+            StoryItem(story = story)
+        }
+    }
+}@Composable
+fun StoryRow(stories: List<Story>) {
+    LazyRow {
+        items(stories) { story ->
+            StoryItem(story = story)
+        }
+    }
+}fun MyTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),fun MyTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    )
+}
+        content = content
+    )
+}
+2. लेआउट@Composable
+fun HomeScreen() {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Instagram") },
+                actions = {
+                    // प्रोफ़ाइल, खोज, संदेश आइकन
+                }
+            )
+        }
+    ) {
+        Column {
+            StoryRow(stories = stories)
+            LazyColumn {
+                items(posts) { post ->
+                    PostItem(post = post)
+                }
+            }
+        }
+    }
+}val colors = if (darkTheme) {
+    DarkColorPalette
+} else {
+    LightColorPalette
+}fun HomeScreen() {
+    val darkTheme = isSystemInDarkTheme()
+    MyTheme(darkTheme = darkTheme) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Instagram", contentDescription = "Instagram App") },
+                    actions = {
+                        Icon(Icons.Default.Search, contentDescription = "Search")
+                        Icon(Icons.Default.Message, contentDescription = "Messages")
+                    }
+                )
+            }
+        ) {
+            Column {
+                StoryRow(stories = stories)
+                LazyColumn {
+                    items(posts) { post ->
+                        PostItem(post = post)
+                    }
+                }
+            }
+        }
+    }
+}@Composable
+fun ProfileEditScreen(viewModel: ProfileViewModel) {
+    // ... UI elements for editing profile information
+    Button(onClick = {
+        viewModel.updateProfile(
+            name = nameTextField.value,
+            bio = bioTextField.value,
+            website = websiteTextField.value
+        )
+    }) {
+        Text("Save")
+    }
+}data class User(
+    val uid: String,
+    val name: String,
+    val bio: String,
+    val website: String,
+    val isPrivate: Boolean,
+    // ... अन्य डेटा
+)
+
+// ViewModel
+class ProfileViewModel(private val userRepository: UserRepository) {
+    fun updateProfile(name: String, bio: String, website: String) {
+        // Firebase Firestore में उपयोगकर्ता डेटा अपडेट करें
+        userRepository.updateProfile(name, bio, website)
+    }
+}@Composable
+fun ProfileImage(imageUrl: String) {
+    Image(
+        painter = rememberAsyncImagePainter(model = imageUrl),
+        contentDescription = "Profile Picture",
+        modifier = Modifier.clickable {
+            // इमेज चुनने के लिए इंटेंट
+        }
+    )
+}private fun uploadProfileImage(uri: Uri) {
+    val storageRef = FirebaseStorage.getInstance().reference
+    val imageRef = storageRef.child("profile_images/${UUID.randomUUID()}.jpg")
+
+    val uploadTask = imageRef.putFile(uri)
+    uploadTask.addOnSuccessListener {
+        // इमेज URL प्राप्त करें और Firestore में अपडेट करें
+    }
+}fun PrivacySettings() {
+  var isPrivate by remember { mutableStateOf(false) }
+  Row(
+      Modifier
+          .fillMaxWidth()
+          .padding(16.dp)
+  ) {
+      Text("Private Account")
+      Spacer(modifier = Modifier.weight(1f))
+      Switch(
+          checked = isPrivate,
+          onCheckedChange = { isPrivate = it }
+      )
+  }
+}// Firebase Firestore में उपयोगकर्ता डेटा अपडेट करें
+db.collection("users")
+    .document(FirebaseAuth.getInstance().currentUser!!.uid)
+    .update("isPrivate", isPrivate)@Composable
+fun FollowersList(users: List<User>) {
+    LazyColumn {
+        items(users) { user ->
+            UserItem(user = user)
+        }
+    }
+}@Composable
+fun NotificationSettings() {
+  // विभिन्न प्रकार के नोटिफिकेशंस के लिए टॉगल स्विच
+}@Composable
+fun ProfileScreen(viewModel: ProfileViewModel) {
+    val user by viewModel.user.collectAsState()
+
+    Column {
+        // प्रोफ़ाइल चित्र
+        ProfileImage(imageUrl = user.profileImageUrl)
+
+        // नाम, जैव, वेबसाइट
+        Text(text = user.name)
+        // ...
+
+        // निजी खाता टॉगल
+        PrivacySettings()
+
+        // फ़ॉलोअर्स और फ़ॉलोइंग बटन
+        // ...
+
+        // नोटिफिकेशन सेटिंग्स
+        // ...
+    }
+}@Composable
+fun ProfileScreen(viewModel: ProfileViewModel) {
+    // ...
+    Image(
+        painter = rememberAsyncImagePainter(model = user.coverImageUrl),
+        contentDescription = "Profile Cover"
+    )
+    // ...
+}@Composable
+fun ProfileScreen(viewModel: ProfileViewModel) {
+    // ...
+    LazyRow {
+        items(user.highlights) { highlight ->
+            HighlightItem(highlight = highlight)
+        }
+    }
+    // ...
+}Composable
+fun UserItem(user: User) {
+    // ...
+    Button(onClick = {
+        viewModel.blockUser(user.id)
+    }) {
+        Text("Block")
+    }
+}data class User(
+    val uid: String,
+    val name: String,
+    val bio: String,
+    val profileImageUrl: String,
+    val coverImageUrl: String,
+    val isPrivate: Boolean,
+    val following: List<String>,
+    val followers: List<String>,
+    val blockedUsers: List<String>
+)
+
+// ViewModel
+class ProfileViewModel(private val userRepository: UserRepository) {
+    fun updateProfile(name: String, bio: String, website: String) {
+        // Firebase Firestore में उपयोगकर्ता डेटा अपडेट करें
+        userRepository.updateProfile(name, bio, website)
+    }
+
+    fun blockUser(userId: String) {
+        // Firebase Firestore में ब्लॉक किए गए उपयोगकर्ताओं की सूची में उपयोगकर्ता को जोड़ें
+        userRepository.blockUser(userId)
+    }
+}fun MyScreen() {
+    Text(
+        text = "Hello, world!",
+        contentDescription = "A greeting message"
+    )
+    
+    Button(onClick = { /* ... */ }) {
+        Text(text = "Click me")
+    }
+}fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}<resources>
+    <string name="hello">Hello, %1$s!</string>
+</resources>@Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            // ... बाकी का UI
+        }
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onServiceConnected() {
+        // सर्विस कनेक्ट होने पर कॉल किया जाता है
+    }
+
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        // जब भी एक एक्सेसिबिलिटी इवेंट होता है, तो यह कॉल किया जाता है
+    }
+}Text(
+    text = "Hello, world!",
+    contentDescription = "A greeting message",
+    modifier = Modifier.semantics {
+        heading()
+    }
+)Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}<resources>
+    <string name="hello">Hello, %1$s!</string>
+</resources>@Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            // ... बाकी का UI
+        }
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                // उपयोगकर्ता ने किसी व्यू पर क्लिक किया है
+            }
+            // अन्य इवेंट टाइप्स
+        }
+    }
+}Kotlin
+
+@Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            // ... बाकी का UI
+        }
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onServiceConnected() {
+        // सर्विस कनेक्ट होने पर कॉल किया जाता है
+    }
+
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                // उपयोगकर्ता ने किसी व्यू पर क्लिक किया है
+                val clickedView = event.source
+                // clickedView का उपयोग करके आवश्यक कार्य करें
+            }
+            // अन्य इवेंट टाइप्स
+        }
+    }
+}@Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}Composable
+fun MyScreen() {
+    Text(
+        text = "This is a button",
+        modifier = Modifier.semantics {
+            // इस तत्व को एक बटन के रूप में चिह्नित करें
+            button()
+        }
+    )
+}@Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}<resources>
+    <string name="hello">Hello, %1$s!</string>
+</resources>@Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            Column {
+                Text(
+                    text = "Hello, world!",
+                    modifier = Modifier.semantics {
+                        heading()
+                    }
+                )
+                Button(onClick = { /* ... */ }) {
+                    Text(text = stringResource(id = R.string.button_text))
+                }
+            }
+        }
+    }
+}Composable
+fun MyScreen() {
+    Text(
+        text = "यह एक बटन है",
+        modifier = Modifier.semantics {
+            button() // इस तत्व को एक बटन के रूप में चिह्नित करें
+            label("क्लिक करें") // तत्व के लिए एक लेबल प्रदान करें
+        }
+    )
+}
+उपरोक्त उदाहरण में, semantic@Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}
+strings.xml फ़ाइल में:
+
+XML
+
+<resources>
+    <string name="hello">नमस्ते, %1$s!</string>
+</resources>@Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            Column {
+                Text(
+                    text = stringResource(id = R.string.welcome),
+                    modifier = Modifier.semantics {
+                        heading()
+                    }
+                )
+                Button(onClick = { /* ... */ }) {
+                    Text(text = stringResource(id = R.string.button_text))
+                }
+            }
+        }
+    }
+}Image(
+    painter = painterResource(id = R.drawable.ic_search),
+    contentDescription = contentDescription = stringResource(id = R.string.search_icon)
+)Button(
+    onClick = { /* ... */ },
+    modifier = Modifier.semantics { clickable(onClickLabel = "Click button") }
+)val colors = if (isSystemInDarkTheme()) {
+    DarkColorPalette
+} else {
+    LightColorPalette
+}@Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            Column {
+                Text(
+                    text = stringResource(id = R.string.welcome),
+                    modifier = Modifier.semantics {
+                        heading()
+                    }
+                )
+                Button(onClick = { /* ... */ }) {
+                    Text(text = stringResource(id = R.string.button_text))
+                }
+            }
+        }
+    }
+}fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}
+strings.xml (अंग्रेजी):
+
+XML
+
+<resources>
+    <string name="hello">Hello, %1$s!</string>
+</resources>
+strings.fr.xml (फ्रेंच):
+
+XML
+
+<resources>
+    <string name="hello">Bonjour, %1$s!</string>
+</resources>@Composable
+fun MyButton(onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.semantics {
+            clickable(onClickLabel = "Click me")
+        }
+    ) {
+        Text(text = "Click me")
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                // उपयोगकर्ता ने किसी व्यू पर क्लिक किया है
+            }
+        }
+    }
+}Composable
+fun MyScreen() {
+    Text(
+        text = "यह एक शीर्षक है",
+        modifier = Modifier.semantics {
+            heading() // इस तत्व को एक शीर्षक के रूप में चिह्नित करें
+        }
+    )
+    
+    Image(
+        painter = painterResource(id = R.drawable.my_image),
+        contentDescription = "यह एक सुंदर दृश्य है",
+        modifier = Modifier.semantics {
+            image()
+        }
+    )
+    
+    Button(
+        onClick = { /* ... */ },
+        modifier = Modifier.semantics {
+            clickable(onClickLabel = "क्लिक करें")
+        }
+    ) {
+        Text(text = "क्लिक करें")
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                // उपयोगकर्ता ने किसी व्यू पर क्लिक किया है
+            }
+            // अन्य इवेंट टाइप्स
+        }
+    }
+}fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}
+strings.xml फ़ाइल में:
+
+XML
+
+<resources>
+    <string name="hello">नमस्ते, %1$s!</string>
+</resources>class MyAccessibilityService : AccessibilityService() {
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                // उपयोगकर्ता ने किसी व्यू पर क्लिक किया है
+                val clickedView = event.source
+                // clickedView का उपयोग करके आवश्यक कार्य करें
+            }
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                // विंडो स्टेट बदल गई है
+                val windowContent = event.source
+                // windowContent का उपयोग करके आवश्यक कार्य करें
+            }
+            // अन्य इवेंट टाइप्स
+        }
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                // यदि कोई विशिष्ट ऐप खुल गया है, तो स्वचालित कार्रवाई करें
+                if (event.className == "com.example.myApp") {
+                    val button = findViewByContentDescription("Login Button")
+                    if (button != null) {
+                        performActionOnView(button, AccessibilityNodeInfo.ACTION_CLICK)
+                    }
+                }
+            }
+        }
+    }
+}fun MyScreen() {
+    Text(
+        text = "यह एक बटन है",
+        modifier = Modifier.semantics {
+            button() // इस तत्व को एक बटन के रूप में चिह्नित करें
+            label("क्लिक करें") // तत्व के लिए एक लेबल प्रदान करें
+        }
+    )
+}fun MyScreen() {
+    Text(
+        text = "यह एक बटन है",
+        modifier = Modifier.semantics {
+            button() // इस तत्व को एक बटन के रूप में चिह्नित करें
+            label("क्लिक करें") // तत्व के लिए एक लेबल प्रदान करें
+        }
+    )
+}Composable
+fun MyScreen() {
+    // ...
+    val accessibilityManager = LocalAccessibilityManager.current
+    if (accessibilityManager.isEnabled) {
+        // यदि Accessibility सेवा सक्षम है, तो अतिरिक्त सुलभता सुविधाएँ जोड़ें
+    }
+}Composable
+fun MyScreen() {
+    val accessibilityManager = LocalAccessibilityManager.current
+
+    Column {
+        Text(
+            text = "यह एक शीर्षक है",
+            modifier = Modifier.semantics {
+                heading()
+            }
+        )
+        
+        Image(
+            painter = painterResource(id = R.drawable.my_image),
+            contentDescription = "यह एक सुंदर दृश्य है",
+            modifier = Modifier.semantics {
+                image()
+            }
+        )
+        
+        Button(
+            onClick = { /* ... */ },
+            modifier = Modifier.semantics {
+                clickable(onClickLabel = "क्लिक करें")
+            }
+        ) {
+            Text(text = "क्लिक करें")
+        }
+    }
+}@Composable
+fun MyScreen() {
+    Text(
+        text = "यह एक बटन है",
+        modifier = Modifier.semantics {
+            button() // इस तत्व को एक बटन के रूप में चिह्नित करें
+            label("क्लिक करें") // तत्व के लिए एक लेबल प्रदान करें
+        }
+    )
+}@Composable
+fun MyScreen() {
+    // ...
+    val accessibilityManager = LocalAccessibilityManager.current
+    if (accessibilityManager.isEnabled) {
+        // यदि Accessibility सेवा सक्षम है, तो अतिरिक्त सुलभता सुविधाएँ जोड़ें
+    }
+}Image(
+    painter = painterResource(id = R.drawable.my_image),
+    contentDescription = "यह एक सुंदर दृश्य है"
+)Button(
+    onClick = { /* ... */ },
+    modifier = Modifier.semantics { clickable(onClickLabel = "क्लिक करें") }
+)Button(
+    onClick = { /* ... */ },
+    modifier = Modifier.semantics { clickable(onClickLabel = "क्लिक करें") }
+)Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            Column {
+                Text(
+                    text = stringResource(id = R.string.welcome),
+                    modifier = Modifier.semantics {
+                        heading()
+                    }
+                )
+                Button(onClick = { /* ... */ }) {
+                    Text(text = stringResource(id = R.string.button_text))
+                }
+            }
+        }
+    }
+}fun MyScreen() {
+    Text(
+        text = "यह एक शीर्षक है",
+        modifier = Modifier.semantics {
+            heading() // इस तत्व को एक शीर्षक के रूप में चिह्नित करें
+        }
+    )
+    
+    Image(
+        painter = painterResource(id = R.drawable.my_image),
+        contentDescription = "यह एक सुंदर दृश्य है",
+        modifier = Modifier.semantics {
+            image()
+        }
+    )
+    
+    Button(
+        onClick = { /* ... */ },
+        modifier = Modifier.semantics {
+            clickable(onClickLabel = "क्लिक करें")
+        }
+    ) {
+        Text(text = "क्लिक करें")
+    }
+}class MyAccessibilityService : AccessibilityService() {
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                // उपयोगकर्ता ने किसी व्यू पर क्लिक किया है
+                val clickedView = event.source
+                // clickedView का उपयोग करके आवश्यक कार्य करें
+            }
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                // विंडो स्टेट बदल गई है
+                val windowContent = event.source
+                // windowContent का उपयोग करके आवश्यक कार्य करें
+            }
+            // अन्य इवेंट टाइप्स
+        }
+    }
+}Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            Column {
+                Text(
+                    text = stringResource(id = R.string.welcome),
+                    modifier = Modifier.semantics {
+                        heading()
+                    }
+                )
+                Button(onClick = { /* ... */ }) {
+                    Text(text = stringResource(id = R.string.button_text))
+                }
+            }
+        }
+    }
+}Kotlin
+
+Image(
+    painter = painterResource(id = R.drawable.ic_search),
+    contentDescription = contentDescription = stringResource(id = R.string.search_icon)
+)onClick = { /* ... */ },
+    modifier = Modifier.semantics { clickable(onClickLabel = "क्लिक करें") }
+)DarkColorPalette
+} else {
+    LightColorPalette
+}fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}fun MyScreen() {
+    // ...
+    val accessibilityManager = LocalAccessibilityManager.current
+    if (accessibilityManager.isEnabled) {
+        // यदि Accessibility सेवा सक्षम है, तो अतिरिक्त सुलभता सुविधाएँ जोड़ें
+    }
+}@Composable
+fun MyScreen(darkTheme: Boolean = isSystemInDarkTheme()) {
+    val colors = if (darkTheme) {
+        DarkColorPalette
+    } else {
+        LightColorPalette
+    }
+
+    MaterialTheme(
+        colors = colors,
+        typography = Typography(),
+        shapes = Shapes(),
+        content = content
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) },
+                    actions = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(id = R.string.search_icon)
+                        )
+                    }
+                )
+            }
+        ) {
+            Column {
+                Text(
+                    text = stringResource(id = R.string.welcome),
+                    modifier = Modifier.semantics {
+                        heading()
+                    }
+                )
+                Button(onClick = { /* ... */ }) {
+                    Text(text = stringResource(id = R.string.button_text))
+                }
+            }
+        }
+    }
+}Semantics API: heading(), image(), clickable() का उपयोग करके तत्वों को चिह्नित किया गया है।
+AndroidX Accessibility: LocalAccessibilityManager का उपयोग करके Accessibility सेवा की जांच की गई है।
+Localization: stringResource का उपयोग करके स्ट्रिंग्स को स्थानीयकृत किया गया है।Image(
+    painter = painterResource(id = R.drawable.ic_search),
+    contentDescription = contentDescription = stringResource(id = R.string.search_icon)
+)Button(
+    onClick = { /* ... */ },
+    modifier = Modifier.semantics { clickable(onClickLabel = "क्लिक करें") }
+)val colors = if (isSystemInDarkTheme()) {
+    DarkColorPalette
+} else {
+    LightColorPalette
+}@Composable
+fun Greeting(name: String) {
+    Text(text = stringResource(id = R.string.hello, name))
+}
